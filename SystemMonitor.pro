@@ -12,13 +12,16 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     src/core/SystemUtils.cpp \
-    src/model/base/basemonitor.cpp
+    src/model/base/basemonitor.cpp \
+    src/model/cpumonitor.cpp \
+    test_basemonitor.cpp
 
 HEADERS += \
     mainwindow.h \
     src/core/Constants.h \
     src/core/SystemUtils.h \
-    src/model/base/basemonitor.h
+    src/model/base/basemonitor.h \
+    src/model/cpumonitor.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

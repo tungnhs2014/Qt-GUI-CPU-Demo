@@ -10,8 +10,7 @@
 QString SystemUtils::readFile(const QString &filePath)
 {
     QFile file(filePath);
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Cannot open file" << filePath;
         return QString();
     }
@@ -27,8 +26,7 @@ QString SystemUtils::readFile(const QString &filePath)
 QStringList SystemUtils::readFileLines(const QString &filePath)
 {
     QString content = readFile(filePath);
-    if (content.isEmpty())
-    {
+    if (content.isEmpty()) {
         return QStringList();
     }
 
@@ -40,8 +38,7 @@ double SystemUtils::parseDouble(const QString &str, bool *ok)
     bool valid = false;
     double result = str.toDouble(&valid);
 
-    if (ok)
-    {
+    if (ok) {
         *ok = valid;
     }
 
@@ -53,8 +50,7 @@ qint64 SystemUtils::parseInt64(const QString &str, bool *ok)
     bool valid = false;
     double result = str.toLongLong(&valid);
 
-    if (ok)
-    {
+    if (ok) {
         *ok = valid;
     }
 
@@ -66,16 +62,14 @@ QString SystemUtils::getHostname()
     // Try Linux/proc filesystem first
     QString hostname = readFile("/proc/sys/kernel/hostname").trimmed();
 
-    if (!hostname.isEmpty())
-    {
+    if (!hostname.isEmpty()) {
         return hostname;
     }
 
     // Fallback to enviroment variable (cross-platform)
     QString envHostname = qgetenv("HOSTNAME");
 
-    if (!envHostname.isEmpty())
-    {
+    if (!envHostname.isEmpty()) {
         return envHostname;
     }
 
@@ -89,20 +83,17 @@ QString SystemUtils::getCurrentTime()
 
 QString SystemUtils::getUptime()
 {
-    if (!fileExits(Constants::PROC_UPTIME))
-    {
+    if (!fileExits(Constants::PROC_UPTIME)) {
         return "Unkown";
     }
 
     QString uptimeContent = readFile(Constants::PROC_UPTIME);
-    if (uptimeContent.isEmpty())
-    {
+    if (uptimeContent.isEmpty()) {
         return "Unkown";
     }
 
     QStringList parts = uptimeContent.split(' ');
-    if (parts.isEmpty())
-    {
+    if (parts.isEmpty()) {
         return "Unkown";
     }
 
@@ -118,30 +109,26 @@ QString SystemUtils::getUptime()
 
 double SystemUtils::getCPUUsageSimple()
 {
-    if (!fileExits(Constants::PROC_STAT))
-    {
+    if (!fileExits(Constants::PROC_STAT)) {
         return 42.5; // Fake data for testing
     }
 
     QString statContent = readFile(Constants::PROC_STAT);
-    if (statContent.isEmpty())
-    {
+    if (statContent.isEmpty()) {
         return 0.0;
     }
 
     // Parse /proc/stat format
     // "cpu user nice system idle irq softirq steal gues guest_nice"
     QStringList lines = statContent.split('\n');
-    if (lines.isEmpty())
-    {
+    if (lines.isEmpty()) {
         return 0.0;
     }
 
     QString cpuLine = lines.first();
 
     QStringList values = cpuLine.split(' ', Qt::SkipEmptyParts);
-    if (values.size() < 5)
-    {
+    if (values.size() < 5) {
         return 0.0;
     }
 
@@ -152,8 +139,7 @@ double SystemUtils::getCPUUsageSimple()
     qint64 idle = parseInt64(values[4]);     // Idle time
 
     qint64 total = user + nice + system + idle;
-    if (total == 0)
-    {
+    if (total == 0) {
         return 0.0; // Avoid division by zero
     }
 
@@ -166,8 +152,7 @@ double SystemUtils::getCPUUsageSimple()
 
 double SystemUtils::getMemoryUsageSimple()
 {
-    if (!fileExits(Constants::PROC_MEMINFO))
-    {
+    if (!fileExits(Constants::PROC_MEMINFO)) {
         return 67.8; // fake data
     }
 
@@ -175,28 +160,22 @@ double SystemUtils::getMemoryUsageSimple()
     qint64 memTotal = 0;
     qint64 memAvaiable = 0;
 
-    for (const QString &line : lines)
-    {
-        if (line.startsWith("MemTotal:"))
-        {
+    for (const QString &line : lines) {
+        if (line.startsWith("MemTotal:")) {
             QStringList parts = line.split(' ', Qt::SkipEmptyParts);
-            if (parts.size() >= 2)
-            {
+            if (parts.size() >= 2) {
                 memTotal = parseInt64(parts[1]) * 1024;  // Convert KB to bytes
             }
         }
-        else if (line.startsWith("MemAvailable:"))
-        {
+        else if (line.startsWith("MemAvailable:")) {
             QStringList parts = line.split(' ', Qt::SkipEmptyParts);
-            if (parts.size() >= 2)
-            {
+            if (parts.size() >= 2) {
                 memAvaiable = parseInt64(parts[1]) * 1024;  // Convert KB to bytes
             }
         }
     }
 
-    if (memTotal == 0)
-    {
+    if (memTotal == 0) {
         return 0.0;
     }
 
