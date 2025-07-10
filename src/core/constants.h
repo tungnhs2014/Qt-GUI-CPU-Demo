@@ -29,6 +29,7 @@ namespace Constants
     // System File Paths (Linux /proc filesystem)
     const QString PROC_STAT = "/proc/stat";
     const QString PROC_MEMINFO = "/proc/meminfo";
+    const QString PROC_CPUINFO = "/proc/cpuinfo";
     const QString PROC_NET_DEV = "/proc/net/dev";
     const QString PROC_UPTIME = "/proc/uptime";
 

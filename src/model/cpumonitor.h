@@ -47,7 +47,9 @@ public:
     }
 
     // History tracking
-    QVector<double> usageHistory() const { return m_usageHistory; }
+    QVector<double> usageHistory() const {
+        return m_usageHistory;
+    }
 
     void clearHistory();
 

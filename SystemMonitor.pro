@@ -11,17 +11,18 @@ CONFIG += c++11
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    src/core/SystemUtils.cpp \
+    src/core/systemUtils.cpp \
     src/model/base/basemonitor.cpp \
     src/model/cpumonitor.cpp \
-    test_basemonitor.cpp
+    src/model/memorymonitor.cpp
 
 HEADERS += \
     mainwindow.h \
-    src/core/Constants.h \
-    src/core/SystemUtils.h \
+    src/core/constants.h \
+    src/core/systemUtils.h \
     src/model/base/basemonitor.h \
-    src/model/cpumonitor.h
+    src/model/cpumonitor.h \
+    src/model/memorymonitor.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

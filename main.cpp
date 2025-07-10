@@ -1,54 +1,81 @@
-// #include "mainwindow.h"
-// #include "src/core/Constants.h"
-// #include "src/core/SystemUtils.h"
-// #include <QApplication>
-// #include <QDebug>
+#include "mainwindow.h"
+#include "src/core/constants.h"
+#include "src/core/systemUtils.h"
+#include "src/model/cpumonitor.h"
+#include "src/model/memorymonitor.h"
+#include <QApplication>
+#include <QDebug>
 
-// int main(int argc, char *argv[])
-// {
-//     QApplication app(argc, argv);
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
 
-//     // Set application properties
-//     app.setApplicationName(Constants::APP_NAME);
-//     app.setApplicationVersion(Constants::APP_VERSION);
-//     app.setOrganizationName(Constants::APP_ORGANIZATION);
+    // Set application properties
+    app.setApplicationName(Constants::APP_NAME);
+    app.setApplicationVersion(Constants::APP_VERSION);
+    app.setOrganizationName(Constants::APP_ORGANIZATION);
 
-//     qDebug() << "===TESTING SystemUltis===";
+    qDebug() << "==TESTING MODEL LAYER===";
 
-//     // Test basic system information
-//     qDebug() << "\n--- System Information ---";
-//     qDebug() << "Hostname: " << SystemUtils::getHostname();
-//     qDebug() << "Current time: " << SystemUtils::getCurrentTime();
-//     qDebug() << "Uptime: " << SystemUtils::getUptime();
+    // Create monitor instances
+    CPUMonitor *cpuMonitor = new CPUMonitor(&app);
+    MemoryMonitor *memoryMonitor = new MemoryMonitor(&app);
 
-//     // Test system monitoring
-//     qDebug() << "\n--- System Monitoring ---";
-//     qDebug() << "CPU Usage:" << SystemUtils::getCPUUsageSimple() << "%";
-//     qDebug() << "Memory Usage:" << SystemUtils::getMemoryUsageSimple() << "%";
-//     qDebug() << "Network Up:" << SystemUtils::getNetworkSpeedUp() << "MB/s";
-//     qDebug() << "Network Down:" << SystemUtils::getNetworkSpeedDown() << "MB/s";
-//     // Real data on Linux, fake data on Windows
+    // Connect signals for testing
+    QObject::connect(cpuMonitor, &CPUMonitor::cpuDataUpdated,
+                     [](const CPUData &data) {
+                         qDebug() << "CPU Update - Usage:" << data.usage << "% Temp:"
+                                  << data.temperature << "°C Model:" << data.model;
+                     });
 
-//     // Test validation functions
-//     qDebug() << "\n--- Validation Tests ---";
-//     qDebug() << "Valid threshold 75.0:" << SystemUtils::isValidThreshold(75.0);
-//     qDebug() << "Valid threshold 150.0:" << SystemUtils::isValidThreshold(150.0);
-//     qDebug() << "Valid threshold -10.0:" << SystemUtils::isValidThreshold(-10.0);
-//     // Should be: true, false, false
+    QObject::connect(memoryMonitor, &MemoryMonitor::memoryDataUpdated,
+                     [](const MemoryData &data) {
+                         qDebug() << "Memory Update - Usage:" << data.usagePercentage
+                                  << "% Total:" << data.totalMemoryFormatted()
+                                  << "Available:" << data.availableMemoryFormatted();
+                     });
 
-//     // Test string parsing
-//     qDebug() << "\n--- String Parsing Tests ---";
-//     bool ok;
-//     double parsed = SystemUtils::parseDouble("123.45", &ok);
-//     qDebug() << "Parse '123.45':" << parsed << "success:" << ok;
+    QObject::connect(cpuMonitor, &BaseMonitor::stateChanged,
+                     [](BaseMonitor::MonitorState state) {
+                         qDebug() << "CPU Monitor state changed to:" << state;
+                     });
 
-//     qint64 parsedInt = SystemUtils::parseInt64("9876543210", &ok);
-//     qDebug() << "Parse '9876543210':" << parsedInt << "success:" << ok;
+    QObject::connect(memoryMonitor, &BaseMonitor::errorOccurred,
+                     [](const QString &error) {
+                         qDebug() << "Memory Monitor error:" << error;
+                     });
 
-//     MainWindow window;
-//     window.resize(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT);
-//     window.setWindowTitle(Constants::APP_NAME + " v" + Constants::APP_VERSION);
-//     window.show();
+    // Test immediate updates
+    qDebug() << "\n--- Testing Immediate Updates ---";
+    cpuMonitor->updateNow();
+    memoryMonitor->updateNow();
 
-//     return app.exec();
-// }
+    // Start continuous monitoring
+    qDebug() << "\n--- Starting Continuous Monitoring ---";
+    cpuMonitor->start();
+    memoryMonitor->start();
+
+    // Stop monitoring after 10 seconds for testing
+    QTimer::singleShot(10000, [=]() {
+        qDebug() << "\n--- Stopping Monitors ---";
+        cpuMonitor->stop();
+        memoryMonitor->stop();
+
+        // Show history
+        auto cpuHistory = cpuMonitor->usageHistory();
+        qDebug() << "CPU History size:" << cpuHistory.size();
+        if (!cpuHistory.isEmpty()) {
+            qDebug() << "CPU History:" << cpuHistory;
+        }
+
+        auto memHistory = memoryMonitor->usageHistory();
+        qDebug() << "Memory History size:" << memHistory.size();
+    });
+
+    MainWindow window;
+    window.resize(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT);
+    window.setWindowTitle(Constants::APP_NAME + " v" + Constants::APP_VERSION);
+    window.show();
+
+    return app.exec();
+}

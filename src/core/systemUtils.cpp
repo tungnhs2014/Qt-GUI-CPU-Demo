@@ -1,5 +1,5 @@
-#include "SystemUtils.h"
-#include "Constants.h"
+#include "systemUtils.h"
+#include "constants.h"
 #include <QFile>
 #include <QTextStream>
 #include <QDateTime>
