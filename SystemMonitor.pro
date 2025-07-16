@@ -14,6 +14,7 @@ SOURCES += \
     src/model/base/basemonitor.cpp \
     src/model/cpumonitor.cpp \
     src/model/memorymonitor.cpp \
+    src/view/dashboardwidget.cpp \
     src/view/widgets/circularprogress.cpp \
     src/view/widgets/metriccard.cpp
 
@@ -23,6 +24,7 @@ HEADERS += \
     src/model/base/basemonitor.h \
     src/model/cpumonitor.h \
     src/model/memorymonitor.h \
+    src/view/dashboardwidget.h \
     src/view/widgets/circularprogress.h \
     src/view/widgets/metriccard.h
 

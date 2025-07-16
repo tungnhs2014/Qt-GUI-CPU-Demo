@@ -1,14 +1,17 @@
 #include <QApplication>
-#include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QWidget>
 #include <QPushButton>
-#include <QSlider>
-#include <QLabel>
 #include <QTimer>
+#include <QRandomGenerator>
 #include <QDebug>
-#include "src/view/widgets/circularprogress.h"
+#include "src/view/widgets/metriccard.h"
 #include "src/core/constants.h"
+
+double randomBetween(double min, double max) {
+    return min + QRandomGenerator::global()->generateDouble() * (max - min);
+}
 
 int main(int argc, char *argv[])
 {
@@ -16,143 +19,155 @@ int main(int argc, char *argv[])
 
     app.setApplicationName(Constants::APP_NAME);
 
-    qDebug() << "=== TESTING CIRCULARPROGRESS ONLY ===";
+    qDebug() << "=== TESTING METRICCARD + CIRCULARPROGRESS ===";
 
     // Create test window
     QWidget *window = new QWidget;
-    window->setWindowTitle("CircularProgress Test");
-    window->resize(600, 400);
+    window->setWindowTitle("MetricCard Test");
+    window->resize(800, 600);
     window->setStyleSheet("background-color: #2C3E50;");
 
     QVBoxLayout *mainLayout = new QVBoxLayout(window);
 
-    // Create multiple CircularProgress widgets for testing
-    QHBoxLayout *progressLayout = new QHBoxLayout;
+    // Create different types of MetricCards
+    QHBoxLayout *cardsLayout = new QHBoxLayout;
 
-    // CPU Progress
-    CircularProgress *cpuProgress = new CircularProgress(window);
-    cpuProgress->setTitle("CPU");
-    cpuProgress->setColor(QColor(Constants::CPU_COLOR));
-    cpuProgress->setValue(45.5);
-    progressLayout->addWidget(cpuProgress);
+    // CPU Card (CircularType)
+    MetricCard *cpuCard = new MetricCard(MetricCard::CircularType, window);
+    cpuCard->setTitle("CPU");
+    cpuCard->setColor(QColor(Constants::CPU_COLOR));
+    cpuCard->setValue(75.5);
+    cpuCard->setSubtitle("Temp: 65°C");
+    cardsLayout->addWidget(cpuCard);
 
-    // RAM Progress
-    CircularProgress *ramProgress = new CircularProgress(window);
-    ramProgress->setTitle("RAM");
-    ramProgress->setColor(QColor(Constants::RAM_COLOR));
-    ramProgress->setValue(78.3);
-    progressLayout->addWidget(ramProgress);
+    // RAM Card (CircularType)
+    MetricCard *ramCard = new MetricCard(MetricCard::CircularType, window);
+    ramCard->setTitle("RAM");
+    ramCard->setColor(QColor(Constants::RAM_COLOR));
+    ramCard->setValue(68.3);
+    ramCard->setSubtitle("6.8GB / 16GB");
+    cardsLayout->addWidget(ramCard);
 
-    // Storage Progress
-    CircularProgress *storageProgress = new CircularProgress(window);
-    storageProgress->setTitle("Storage");
-    storageProgress->setColor(QColor("#9B59B6"));
-    storageProgress->setValue(67.2);
-    progressLayout->addWidget(storageProgress);
+    // Network Card (NetworkType)
+    MetricCard *networkCard = new MetricCard(MetricCard::NetworkType, window);
+    networkCard->setTitle("Network");
+    networkCard->setColor(QColor("#27AE60"));
+    networkCard->setNetworkSpeeds(1.2, 5.8);
+    networkCard->setSubtitle("Wi-Fi Connected");
+    cardsLayout->addWidget(networkCard);
 
-    mainLayout->addLayout(progressLayout);
+    // System Info Card (TextType)
+    MetricCard *infoCard = new MetricCard(MetricCard::TextType, window);
+    infoCard->setTitle("System");
+    infoCard->setColor(QColor("#9B59B6"));
+    infoCard->setText("Online");
+    infoCard->setSubtitle("3d 4h 15m");
+    cardsLayout->addWidget(infoCard);
+
+    mainLayout->addLayout(cardsLayout);
 
     // Test controls
     QHBoxLayout *controlLayout = new QHBoxLayout;
 
-    // Value slider
-    QLabel *sliderLabel = new QLabel("Test Value:", window);
-    sliderLabel->setStyleSheet("color: white;");
-    QSlider *valueSlider = new QSlider(Qt::Horizontal, window);
-    valueSlider->setRange(0, 100);
-    valueSlider->setValue(50);
-    QLabel *valueLabel = new QLabel("50%", window);
-    valueLabel->setStyleSheet("color: white;");
+    QPushButton *updateValuesBtn = new QPushButton("Update Random Values", window);
+    QPushButton *testColorsBtn = new QPushButton("Test Colors", window);
+    QPushButton *startAnimBtn = new QPushButton("Start Auto Update", window);
+    QPushButton *stopAnimBtn = new QPushButton("Stop Auto Update", window);
 
-    controlLayout->addWidget(sliderLabel);
-    controlLayout->addWidget(valueSlider);
-    controlLayout->addWidget(valueLabel);
+    controlLayout->addWidget(updateValuesBtn);
+    controlLayout->addWidget(testColorsBtn);
+    controlLayout->addWidget(startAnimBtn);
+    controlLayout->addWidget(stopAnimBtn);
 
     mainLayout->addLayout(controlLayout);
 
-    // Connect slider to all progress widgets
-    QObject::connect(valueSlider, &QSlider::valueChanged, [=](int value) {
-        cpuProgress->setValue(value);
-        ramProgress->setValue(value);
-        storageProgress->setValue(value);
-        valueLabel->setText(QString::number(value) + "%");
-        qDebug() << "Slider value changed to:" << value;
-    });
+    // Auto-update timer
+    QTimer *updateTimer = new QTimer(window);
 
-    // Auto-animation test
-    QTimer *animTimer = new QTimer(window);
-    int animValue = 0;
-    bool increasing = true;
+    // Connect buttons
+    QObject::connect(updateValuesBtn, &QPushButton::clicked, [=]() {
+        // Generate random values
+        double cpuVal = QRandomGenerator::global()->bounded(100.0);
+        double ramVal = QRandomGenerator::global()->bounded(100.0);
+        double upSpeed = QRandomGenerator::global()->bounded(10.0);
+        double downSpeed = QRandomGenerator::global()->bounded(50.0);
 
-    QObject::connect(animTimer, &QTimer::timeout, [&]() {
-        if (increasing) {
-            animValue += 2;
-            if (animValue >= 100) increasing = false;
-        } else {
-            animValue -= 2;
-            if (animValue <= 0) increasing = true;
-        }
+        cpuCard->setValue(cpuVal);
+        ramCard->setValue(ramVal);
+        networkCard->setNetworkSpeeds(upSpeed, downSpeed);
+        infoCard->setText(QString::number(cpuVal, 'f', 1) + "%");
 
-        // Update one widget for auto-animation demo
-        storageProgress->setValue(animValue);
-        qDebug() << "Auto-animation value:" << animValue;
-    });
-
-    // Control buttons
-    QHBoxLayout *buttonLayout = new QHBoxLayout;
-
-    QPushButton *startAnimBtn = new QPushButton("Start Auto Animation", window);
-    QPushButton *stopAnimBtn = new QPushButton("Stop Auto Animation", window);
-    QPushButton *testColorsBtn = new QPushButton("Test Colors", window);
-
-    QObject::connect(startAnimBtn, &QPushButton::clicked, [=]() {
-        animTimer->start(100);  // 100ms intervals
-        qDebug() << "Auto-animation started";
-    });
-
-    QObject::connect(stopAnimBtn, &QPushButton::clicked, [=]() {
-        animTimer->stop();
-        qDebug() << "Auto-animation stopped";
+        qDebug() << "Random values - CPU:" << cpuVal << "RAM:" << ramVal
+                 << "Network:" << upSpeed << "/" << downSpeed;
     });
 
     QObject::connect(testColorsBtn, &QPushButton::clicked, [=]() {
-        static bool colorTest = false;
-        if (!colorTest) {
-            cpuProgress->setColor(QColor("#E74C3C"));  // Red
-            ramProgress->setColor(QColor("#F39C12"));  // Orange
-            storageProgress->setColor(QColor("#27AE60")); // Green
+        static bool testMode = false;
+        if (!testMode) {
+            cpuCard->setColor(QColor("#E74C3C"));    // Critical red
+            ramCard->setColor(QColor("#F39C12"));    // Warning orange
+            networkCard->setColor(QColor("#27AE60")); // Success green
+            infoCard->setColor(QColor("#9B59B6"));    // Info purple
         } else {
-            cpuProgress->setColor(QColor(Constants::CPU_COLOR));
-            ramProgress->setColor(QColor(Constants::RAM_COLOR));
-            storageProgress->setColor(QColor("#9B59B6"));
+            cpuCard->setColor(QColor(Constants::CPU_COLOR));
+            ramCard->setColor(QColor(Constants::RAM_COLOR));
+            networkCard->setColor(QColor("#27AE60"));
+            infoCard->setColor(QColor("#9B59B6"));
         }
-        colorTest = !colorTest;
-        qDebug() << "Colors changed, test mode:" << colorTest;
+        testMode = !testMode;
+        qDebug() << "Color test mode:" << testMode;
     });
 
-    buttonLayout->addWidget(startAnimBtn);
-    buttonLayout->addWidget(stopAnimBtn);
-    buttonLayout->addWidget(testColorsBtn);
+    QObject::connect(startAnimBtn, &QPushButton::clicked, [=]() {
+        updateTimer->start(2000);  // Update every 2 seconds
+        qDebug() << "Auto-update started";
+    });
 
-    mainLayout->addLayout(buttonLayout);
+    QObject::connect(stopAnimBtn, &QPushButton::clicked, [=]() {
+        updateTimer->stop();
+        qDebug() << "Auto-update stopped";
+    });
+
+    QObject::connect(updateTimer, &QTimer::timeout, [=]() {
+        // Simulate realistic system changes
+        static double cpuBase = 45.0;
+        static double ramBase = 65.0;
+
+        cpuBase += randomBetween(-5.0, 5.0);
+        ramBase += randomBetween(-2.0, 2.0);
+
+        cpuBase = qMax(0.0, qMin(100.0, cpuBase));
+        ramBase = qMax(0.0, qMin(100.0, ramBase));
+
+        cpuCard->setValue(cpuBase);
+        ramCard->setValue(ramBase);
+
+        double upSpeed = QRandomGenerator::global()->bounded(5.0);
+        double downSpeed = QRandomGenerator::global()->bounded(20.0);
+        networkCard->setNetworkSpeeds(upSpeed, downSpeed);
+
+        qDebug() << "Auto-update - CPU:" << cpuBase << "RAM:" << ramBase;
+    });
 
     // Info label
     QLabel *infoLabel = new QLabel(
-        "CircularProgress Test:\n"
-        "• Use slider to test manual value changes\n"
-        "• Auto animation tests smooth transitions\n"
-        "• Color button tests theme changes\n"
-        "• All widgets should show smooth animations", window);
+        "MetricCard Test:\n"
+        "• 4 different card types displayed\n"
+        "• CPU & RAM: CircularProgress integration\n"
+        "• Network: Up/down speed display\n"
+        "• System: Simple text display\n"
+        "• All cards should show smooth animations\n"
+        "• Colors and styling should be consistent", window);
     infoLabel->setStyleSheet("color: #ECF0F1; font-size: 10px;");
     infoLabel->setWordWrap(true);
     mainLayout->addWidget(infoLabel);
 
     window->show();
 
-    qDebug() << "CircularProgress test window displayed";
-    qDebug() << "Expected: 3 circular progress widgets with different colors";
-    qDebug() << "Expected: Smooth animations when values change";
-    qDebug() << "Expected: Interactive controls working";
+    qDebug() << "MetricCard test window displayed";
+    qDebug() << "Expected: 4 styled cards with different content types";
+    qDebug() << "Expected: Smooth value updates with animations";
+    qDebug() << "Expected: Professional card styling with headers";
 
     return app.exec();
 }
