@@ -16,6 +16,7 @@ DashboardWidget::DashboardWidget(QWidget *parent)
 {
     setupUI();
     setupMetricCards();
+    setupSystemInfoSection();
     applyDashboardStyling();
 
     // Setup time update

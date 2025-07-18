@@ -1,173 +1,174 @@
 #include <QApplication>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QWidget>
 #include <QPushButton>
 #include <QTimer>
 #include <QRandomGenerator>
 #include <QDebug>
-#include "src/view/widgets/metriccard.h"
+#include "src/view/dashboardwidget.h"
+#include "src/model/cpumonitor.h"
+#include "src/model/memorymonitor.h"
 #include "src/core/constants.h"
-
-double randomBetween(double min, double max) {
-    return min + QRandomGenerator::global()->generateDouble() * (max - min);
-}
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
     app.setApplicationName(Constants::APP_NAME);
-
-    qDebug() << "=== TESTING METRICCARD + CIRCULARPROGRESS ===";
+    qDebug() << "=== TESTING COMPLETE DASHBOARD ===";
 
     // Create test window
     QWidget *window = new QWidget;
-    window->setWindowTitle("MetricCard Test");
-    window->resize(800, 600);
-    window->setStyleSheet("background-color: #2C3E50;");
+    window->setWindowTitle("Complete Dashboard Test");
+    window->resize(900, 700);
+    window->setStyleSheet(
+        "QWidget {"
+        "   background-color: #2C3E50;"
+        "   color: #ECF0F1;"
+        "}"
+        );
 
     QVBoxLayout *mainLayout = new QVBoxLayout(window);
 
-    // Create different types of MetricCards
-    QHBoxLayout *cardsLayout = new QHBoxLayout;
+    // Create dashboard
+    DashboardWidget *dashboard = new DashboardWidget(window);
+    mainLayout->addWidget(dashboard);
 
-    // CPU Card (CircularType)
-    MetricCard *cpuCard = new MetricCard(MetricCard::CircularType, window);
-    cpuCard->setTitle("CPU");
-    cpuCard->setColor(QColor(Constants::CPU_COLOR));
-    cpuCard->setValue(75.5);
-    cpuCard->setSubtitle("Temp: 65°C");
-    cardsLayout->addWidget(cpuCard);
+    // Create real monitors for integration test
+    CPUMonitor *cpuMonitor = new CPUMonitor(&app);
+    MemoryMonitor *memoryMonitor = new MemoryMonitor(&app);
 
-    // RAM Card (CircularType)
-    MetricCard *ramCard = new MetricCard(MetricCard::CircularType, window);
-    ramCard->setTitle("RAM");
-    ramCard->setColor(QColor(Constants::RAM_COLOR));
-    ramCard->setValue(68.3);
-    ramCard->setSubtitle("6.8GB / 16GB");
-    cardsLayout->addWidget(ramCard);
-
-    // Network Card (NetworkType)
-    MetricCard *networkCard = new MetricCard(MetricCard::NetworkType, window);
-    networkCard->setTitle("Network");
-    networkCard->setColor(QColor("#27AE60"));
-    networkCard->setNetworkSpeeds(1.2, 5.8);
-    networkCard->setSubtitle("Wi-Fi Connected");
-    cardsLayout->addWidget(networkCard);
-
-    // System Info Card (TextType)
-    MetricCard *infoCard = new MetricCard(MetricCard::TextType, window);
-    infoCard->setTitle("System");
-    infoCard->setColor(QColor("#9B59B6"));
-    infoCard->setText("Online");
-    infoCard->setSubtitle("3d 4h 15m");
-    cardsLayout->addWidget(infoCard);
-
-    mainLayout->addLayout(cardsLayout);
+    // Connect monitors to dashboard
+    dashboard->connectCPUMonitor(cpuMonitor);
+    dashboard->connectMemoryMonitor(memoryMonitor);
 
     // Test controls
     QHBoxLayout *controlLayout = new QHBoxLayout;
 
-    QPushButton *updateValuesBtn = new QPushButton("Update Random Values", window);
-    QPushButton *testColorsBtn = new QPushButton("Test Colors", window);
-    QPushButton *startAnimBtn = new QPushButton("Start Auto Update", window);
-    QPushButton *stopAnimBtn = new QPushButton("Stop Auto Update", window);
+    QPushButton *startRealDataBtn = new QPushButton("Start Real Data", window);
+    QPushButton *stopRealDataBtn = new QPushButton("Stop Real Data", window);
+    QPushButton *fakeDataBtn = new QPushButton("Generate Fake Data", window);
+    QPushButton *testThresholdBtn = new QPushButton("Test Thresholds", window);
 
-    controlLayout->addWidget(updateValuesBtn);
-    controlLayout->addWidget(testColorsBtn);
-    controlLayout->addWidget(startAnimBtn);
-    controlLayout->addWidget(stopAnimBtn);
+    controlLayout->addWidget(startRealDataBtn);
+    controlLayout->addWidget(stopRealDataBtn);
+    controlLayout->addWidget(fakeDataBtn);
+    controlLayout->addWidget(testThresholdBtn);
 
     mainLayout->addLayout(controlLayout);
 
-    // Auto-update timer
-    QTimer *updateTimer = new QTimer(window);
+    // Fake data timer
+    QTimer *fakeDataTimer = new QTimer(window);
 
-    // Connect buttons
-    QObject::connect(updateValuesBtn, &QPushButton::clicked, [=]() {
-        // Generate random values
-        double cpuVal = QRandomGenerator::global()->bounded(100.0);
-        double ramVal = QRandomGenerator::global()->bounded(100.0);
-        double upSpeed = QRandomGenerator::global()->bounded(10.0);
-        double downSpeed = QRandomGenerator::global()->bounded(50.0);
-
-        cpuCard->setValue(cpuVal);
-        ramCard->setValue(ramVal);
-        networkCard->setNetworkSpeeds(upSpeed, downSpeed);
-        infoCard->setText(QString::number(cpuVal, 'f', 1) + "%");
-
-        qDebug() << "Random values - CPU:" << cpuVal << "RAM:" << ramVal
-                 << "Network:" << upSpeed << "/" << downSpeed;
+    // Connect controls
+    QObject::connect(startRealDataBtn, &QPushButton::clicked, [=]() {
+        cpuMonitor->start();
+        memoryMonitor->start();
+        fakeDataTimer->stop();
+        qDebug() << "Real data monitoring started";
     });
 
-    QObject::connect(testColorsBtn, &QPushButton::clicked, [=]() {
-        static bool testMode = false;
-        if (!testMode) {
-            cpuCard->setColor(QColor("#E74C3C"));    // Critical red
-            ramCard->setColor(QColor("#F39C12"));    // Warning orange
-            networkCard->setColor(QColor("#27AE60")); // Success green
-            infoCard->setColor(QColor("#9B59B6"));    // Info purple
-        } else {
-            cpuCard->setColor(QColor(Constants::CPU_COLOR));
-            ramCard->setColor(QColor(Constants::RAM_COLOR));
-            networkCard->setColor(QColor("#27AE60"));
-            infoCard->setColor(QColor("#9B59B6"));
+    QObject::connect(stopRealDataBtn, &QPushButton::clicked, [=]() {
+        cpuMonitor->stop();
+        memoryMonitor->stop();
+        fakeDataTimer->stop();
+        qDebug() << "All monitoring stopped";
+    });
+
+    QObject::connect(fakeDataBtn, &QPushButton::clicked, [=]() {
+        // Stop real data first
+        cpuMonitor->stop();
+        memoryMonitor->stop();
+
+        // Start fake data updates
+        fakeDataTimer->start(1500);  // Every 1.5 seconds
+        qDebug() << "Fake data generation started";
+    });
+
+    QObject::connect(testThresholdBtn, &QPushButton::clicked, [=]() {
+        // Test threshold colors
+        static int testStep = 0;
+
+        switch (testStep) {
+        case 0:
+            dashboard->updateCPUMetrics(50.0, 55.0);    // Normal - green
+            dashboard->updateMemoryMetrics(60.0, "Test Normal");
+            dashboard->updateStorageMetrics(45.0);
+            qDebug() << "Testing normal thresholds (green)";
+            break;
+        case 1:
+            dashboard->updateCPUMetrics(80.0, 75.0);    // Warning - yellow
+            dashboard->updateMemoryMetrics(85.0, "Test Warning");
+            dashboard->updateStorageMetrics(85.0);
+            qDebug() << "Testing warning thresholds (yellow)";
+            break;
+        case 2:
+            dashboard->updateCPUMetrics(95.0, 85.0);    // Critical - red
+            dashboard->updateMemoryMetrics(98.0, "Test Critical");
+            dashboard->updateStorageMetrics(95.0);
+            qDebug() << "Testing critical thresholds (red)";
+            break;
         }
-        testMode = !testMode;
-        qDebug() << "Color test mode:" << testMode;
+
+        testStep = (testStep + 1) % 3;
     });
 
-    QObject::connect(startAnimBtn, &QPushButton::clicked, [=]() {
-        updateTimer->start(2000);  // Update every 2 seconds
-        qDebug() << "Auto-update started";
-    });
-
-    QObject::connect(stopAnimBtn, &QPushButton::clicked, [=]() {
-        updateTimer->stop();
-        qDebug() << "Auto-update stopped";
-    });
-
-    QObject::connect(updateTimer, &QTimer::timeout, [=]() {
-        // Simulate realistic system changes
+    QObject::connect(fakeDataTimer, &QTimer::timeout, [=]() {
+        // Generate realstic fake data
         static double cpuBase = 45.0;
         static double ramBase = 65.0;
+        static double storageBase = 72.0;
 
-        cpuBase += randomBetween(-5.0, 5.0);
-        ramBase += randomBetween(-2.0, 2.0);
+        // Gradual changes
+        double cpuChange = (QRandomGenerator::global()->generateDouble() * 6.0) - 3.0;    // -3.0 to +3.0
+        double ramChange = (QRandomGenerator::global()->generateDouble() * 2.0) - 1.0;    // -1.0 to +1.0
+        double storageChange = (QRandomGenerator::global()->generateDouble() * 1.0) -0.5;
 
-        cpuBase = qMax(0.0, qMin(100.0, cpuBase));
-        ramBase = qMax(0.0, qMin(100.0, ramBase));
+        cpuBase += cpuChange;
+        ramBase += ramChange;
+        storageBase += storageChange;
 
-        cpuCard->setValue(cpuBase);
-        ramCard->setValue(ramBase);
+        // Keep in bounds
+        cpuBase = qMax(10.0, qMin(90.0, cpuBase));
+        ramBase = qMax(30.0, qMin(85.0, ramBase));
+        storageBase = qMax(50.0, qMin(95.0, storageBase));
 
-        double upSpeed = QRandomGenerator::global()->bounded(5.0);
-        double downSpeed = QRandomGenerator::global()->bounded(20.0);
-        networkCard->setNetworkSpeeds(upSpeed, downSpeed);
+        double temVariation = QRandomGenerator::global()->generateDouble() * 20.0;
+        double cpuTemp = 45.0 + temVariation;  // 45-65°C
 
-        qDebug() << "Auto-update - CPU:" << cpuBase << "RAM:" << ramBase;
+        // Update dashboard
+        dashboard->updateCPUMetrics(cpuBase, cpuTemp);
+        dashboard->updateMemoryMetrics(ramBase, QString("%.1f GB / 16.0 GB").arg(ramBase * 16.0 / 100.0));
+        dashboard->updateStorageMetrics(storageBase);
+
+        double upSpeed = QRandomGenerator::global()->generateDouble() * 1.5 + 0.5;   // 0.5-2.0 MB/s
+        double downSpeed = QRandomGenerator::global()->generateDouble() * 8.0 + 2.0;  // 2.0-10.0 MB/s
+        dashboard->updateNetworkMetrics(upSpeed, downSpeed);
+
+        qDebug() << "Fake data update - CPU:" << cpuBase << "RAM:" << ramBase << "Storage:" << storageBase;
     });
+
+    // Initial data setup
+    dashboard->updateCPUMetrics(45.5, 62.0);
+    dashboard->updateMemoryMetrics(68.3, "6.8 GB / 16.0 GB");
+    dashboard->updateNetworkMetrics(1.2, 5.8);
+    dashboard->updateStorageMetrics(72.4);
 
     // Info label
     QLabel *infoLabel = new QLabel(
-        "MetricCard Test:\n"
-        "• 4 different card types displayed\n"
-        "• CPU & RAM: CircularProgress integration\n"
-        "• Network: Up/down speed display\n"
-        "• System: Simple text display\n"
-        "• All cards should show smooth animations\n"
-        "• Colors and styling should be consistent", window);
-    infoLabel->setStyleSheet("color: #ECF0F1; font-size: 10px;");
+        "Complete Dashboard Test:\n"
+        "• 2x2 grid layout matching demo design\n"
+        "• Real-time system info bar (date, time, hostname, uptime)\n"
+        "• Start Real Data: Connect to actual CPU/Memory monitors\n"
+        "• Fake Data: Simulate realistic changing values\n"
+        "• Test Thresholds: Cycle through normal/warning/critical colors\n"
+        "• All cards should update smoothly với proper color changes", window);
+
+    infoLabel->setStyleSheet("color: #ECF0F1l; font-size: 9px;");
     infoLabel->setWordWrap(true);
     mainLayout->addWidget(infoLabel);
 
     window->show();
-
-    qDebug() << "MetricCard test window displayed";
-    qDebug() << "Expected: 4 styled cards with different content types";
-    qDebug() << "Expected: Smooth value updates with animations";
-    qDebug() << "Expected: Professional card styling with headers";
-
     return app.exec();
 }
