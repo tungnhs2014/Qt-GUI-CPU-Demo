@@ -2,6 +2,7 @@
 #include "widgets/metriccard.h"
 #include "../model/cpumonitor.h"
 #include "../model/memorymonitor.h"
+#include "../model/networkmonitor.h"
 #include "../core/constants.h"
 #include "../core/systemUtils.h"
 #include <QDateTime>
@@ -166,6 +167,26 @@ void DashboardWidget::connectMemoryMonitor(MemoryMonitor *monitor)
                 });
 
         qDebug() << "Memory Monitor connected to dashboard";
+    }
+}
+
+void DashboardWidget::connectNetworkMonitor(NetworkMonitor *monitor)
+{
+    if (m_networkMonitor) {
+        disconnect(m_networkMonitor, nullptr, this, nullptr);
+    }
+
+    m_networkMonitor = monitor;
+
+    if (monitor) {
+        connect(monitor, &NetworkMonitor::networkDataUpdated, this, [this](const NetworkData &data) {
+            updateNetworkMetrics(data.uploadSpeed, data.downloadSpeed);
+
+            QString subtitle = QString("%1").arg(data.activeInterface);
+            m_networkCard->setSubtitle(subtitle);
+        });
+
+        qDebug() << "Network Monitor connected to dashboard";
     }
 }
 

@@ -11,9 +11,13 @@ namespace Constants
     const QString APP_ORGANIZATION  = "EmbeddedSystems";
 
     // Update Intervals (milliseconds)
-    const int UPDATE_INTERVAL = 1000;
-    const int FAST_UPDATE_INTERVAL = 500;
-    const int SLOW_UPDATE_INTERVAL = 5000;
+    const int UPDATE_INTERVAL = 1000;              // General monitoring updates
+    const int FAST_UPDATE_INTERVAL = 500;          // High-frequency updates
+    const int SLOW_UPDATE_INTERVAL = 5000;         // Low-frequency updates
+    const int NETWORK_UPDATE_INTERVAL = 2000;      // Network speed calculation
+    const int STORAGE_UPDATE_INTERVAL = 5000;      // Storage monitoring
+    const int ALERT_CHECK_INTERVAL = 3000;         // Alert threshold checking
+    const int ALERT_CLEANUP_INTERVAL = 300000;     // Alert cleanup (5 minutes)
 
     // Alert Thresholds (percentage)
     const double CPU_WARNING_THRESHOLD = 75.0;
@@ -74,10 +78,20 @@ namespace Constants
     const QString STATE_STOPPING = "Stopping";
     const QString STATE_ERROR = "Error";
 
+    // Network Interface Names (common Linux interfaces)
+    const QStringList NETWORK_INTERFACES = {
+        "eth0", "wlan0", "enp0s3", "wlp2s0", "ens33", "ens32"
+    };
+
     // Default Values
     const int DEFAULT_HISTORY_SIZE = 60;           // Keep 60 data points
     const int MAX_ALERTS_HISTORY = 100;            // Maximum alerts to store
     const double EPSILON = 0.001;                  // For floating point comp
+
+    // File size constants
+    const qint64 BYTES_PER_KB = 1024;
+    const qint64 BYTES_PER_MB = 1024 * 1024;
+    const qint64 BYTES_PER_GB = 1024 * 1024 * 1024;
 }
 
 #endif // CONSTANTS_H

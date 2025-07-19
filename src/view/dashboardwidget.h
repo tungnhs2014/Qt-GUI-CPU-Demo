@@ -11,6 +11,7 @@
 class MetricCard;
 class CPUMonitor;
 class MemoryMonitor;
+class NetworkMonitor;
 
 class DashboardWidget : public QWidget
 {
@@ -21,6 +22,7 @@ public:
     // Monitor integration (for real data)
     void connectCPUMonitor(CPUMonitor *monitor);
     void connectMemoryMonitor(MemoryMonitor *monitor);
+    void connectNetworkMonitor(NetworkMonitor *monitor);
 
     // Manual update methods (for testing and fake data)
     void updateCPUMetrics(double usage, double temperature = 0.0);
@@ -61,6 +63,7 @@ private:
     // Connected monitors (weak references)
     CPUMonitor *m_cpuMonitor = nullptr;
     MemoryMonitor *m_memoryMonitor = nullptr;
+    NetworkMonitor *m_networkMonitor = nullptr;
 };
 
 #endif // DASHBOARDWIDGET_H
