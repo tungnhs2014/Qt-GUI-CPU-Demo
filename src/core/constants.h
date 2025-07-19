@@ -61,6 +61,18 @@ namespace Constants
     const QString SETTINGS_RAM_CRITICAL = "RAMCritical";
     const QString SETTINGS_THEME = "Theme";
     const QString SETTINGS_UPDATE_INTERVAL = "UpdateInterval";
+    const QString SETTINGS_WINDOW_GEOMETRY = "window_geometry";
+    const QString SETTINGS_WINDOW_STATE = "window_state";
+    const QString SETTINGS_AUTOSTART = "autostart";
+    const QString SETTINGS_ALERTS_ENABLED = "alerts_enabled";
+    const QString SETTINGS_MONITORING_ENABLED = "monitoring_enabled";
+
+    // Controller States (for MVC pattern)
+    const QString STATE_STOPPED = "Stopped";
+    const QString STATE_STARTING = "Starting";
+    const QString STATE_RUNNING = "Running";
+    const QString STATE_STOPPING = "Stopping";
+    const QString STATE_ERROR = "Error";
 
     // Default Values
     const int DEFAULT_HISTORY_SIZE = 60;           // Keep 60 data points
